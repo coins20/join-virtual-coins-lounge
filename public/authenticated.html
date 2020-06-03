@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="ja">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Virtual Coins Lounge</title>
+
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.0/css/bootstrap.min.css" integrity="sha384-9aIt2nRpC12Uk9gS9baDl411NQApFmC26EwAOH8WgZl5MYYxFfc+NcPb1dKGj7Sk" crossorigin="anonymous">
+
+    <!-- update the version number as needed -->
+    <script defer src="/__/firebase/7.14.6/firebase-app.js"></script>
+    <!-- include only the Firebase features as you need -->
+    <script defer src="/__/firebase/7.14.6/firebase-auth.js"></script>
+    <script defer src="/__/firebase/7.14.6/firebase-functions.js"></script>
+    <!-- initialize the SDK after all desired features are loaded -->
+    <script defer src="/__/firebase/init.js"></script>
+  </head>
+  <body>
+    <div class="container card mt-5 text-center">
+      <div class="card-body">
+        <h1 class="card-title display-4">メール認証完了</h1>
+        <p id="description">メールアドレスが認証されました。以下より Discord との接続を行うことで Virtual Coins Lounge に招待されます。</p>
+        <a id="discord-auth-link" class="btn btn-primary disabled" role="button" aria-disabled="true" href="">Discord を接続</a>
+      </div>
+    </div>
+    <p class="container text-center text-muted" id="message">
+      ロード中
+    </p>
+
+    <script>
+      function setMessage(msg) {
+        document.getElementById('message').textContent = msg;
+      }
+
+      document.addEventListener('DOMContentLoaded', async function() {
+        const messageElement = document.getElementById('message');
+        try {
+          const getEmailResult = await firebase.functions().httpsCallable('getDiscordAuthURL')();
+          const { href, state } = getEmailResult.data;
+          window.localStorage.setItem('state', state);
+
+          const linkElement = document.getElementById('discord-auth-link');
+          linkElement.href = href;
+          linkElement.classList.remove('disabled');
+          linkElement.ariaDisabled = false;
+
+          setMessage('');
+        } catch (err) {
+          console.error(err);
+          setMessage('エラーが発生しました: ' + err.message);
+        }
+      });
+    </script>
+  </body>
+</html>

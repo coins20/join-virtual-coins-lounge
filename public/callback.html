@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="ja">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Virtual Coins Lounge</title>
+
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.0/css/bootstrap.min.css" integrity="sha384-9aIt2nRpC12Uk9gS9baDl411NQApFmC26EwAOH8WgZl5MYYxFfc+NcPb1dKGj7Sk" crossorigin="anonymous">
+
+    <!-- update the version number as needed -->
+    <script defer src="/__/firebase/7.14.6/firebase-app.js"></script>
+    <!-- include only the Firebase features as you need -->
+    <script defer src="/__/firebase/7.14.6/firebase-auth.js"></script>
+    <script defer src="/__/firebase/7.14.6/firebase-functions.js"></script>
+    <!-- initialize the SDK after all desired features are loaded -->
+    <script defer src="/__/firebase/init.js"></script>
+  </head>
+  <body>
+    <div class="container card mt-5 text-center">
+      <div class="card-body">
+        <h1 class="card-title display-4" id="title">Discord との接続</h1>
+        <p id="description">Discord に接続し招待を行っています。</p>
+      </div>
+    </div>
+
+    <script>
+      function setMessage(msg) {
+        document.getElementById('description').textContent = msg;
+      }
+
+      function getQueryString() {
+        const search = window.document.location.search;
+        const start = search.indexOf('?');
+        if (start < 0) {
+          return {};
+        }
+        const elements = search.substring(start+1).split('&');
+        const query = {};
+        for (let i = 0; i < elements.length; i++) {
+          const parts = elements[i].split('=');
+          query[decodeURIComponent(parts[0])] = decodeURIComponent(parts[1] || 0);
+        }
+        return query;
+      }
+
+      function validateState(queryState) {
+        const localState = window.localStorage.getItem('state');
+        if (!localState) {
+          console.error('no local state');
+          setMessage('エラーが発生しました: no local state');
+          return false;
+        }
+        if (queryState !== localState) {
+          console.error('state not match');
+          console.log(queryState);
+          console.log(localState);
+          setMessage(`エラーが発生しました: state not match (${queryState} != ${localState})`);
+          return false;
+        }
+        window.localStorage.removeItem('state');
+        return true;
+      }
+
+      document.addEventListener('DOMContentLoaded', async function() {
+        try {
+          const query = getQueryString();
+
+          if (!validateState(query['state'])) return;
+
+          const result = await firebase.functions().httpsCallable('authDiscord')({ code: query['code'] });
+          setMessage(`${result.data.discord_name} を Discord の Virtual Coins Lounge に招待しました。`)
+        } catch (err) {
+          console.error(err);
+          setMessage('エラーが発生しました: ' + err.message);
+        }
+      });
+    </script>
+  </body>
+</html>
